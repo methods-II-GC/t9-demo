@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -eou pipefail
+
+./char_tokenize.py > news.txt
+farcompilestrings \
+    --fst_type=compact \
+    --token_type=byte \
+    news.txt - |
+  ngramcount \
+      --order=6 \
+      --require_symbols=false \
+      - - | \
+   ngrammake \
+      --method=witten_bell \
+      - - | \
+   ngramshrink \
+      --method=relative_entropy \
+      --target_number_of_ngrams=1000000 \
+      - char.lm
+echo "LM size:"
+ngraminfo char.lm
