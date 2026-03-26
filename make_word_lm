@@ -7,6 +7,7 @@ ngramsymbols news.tok news.sym
 farcompilestrings \
     --fst_type=compact \
     --symbols=news.sym \
+    --keep_symbols=true \
     news.tok - |
   ngramcount \
       --order=3 \
