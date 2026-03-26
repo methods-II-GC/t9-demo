@@ -5,7 +5,7 @@ import pynini
 from pynini.examples import t9
 from pynini.lib import rewrite
 
-SOURCE = "char.txt"
+SOURCE = "news.txt"
 LM = "char.lm"
 
 def lexicon() -> set[str]:
