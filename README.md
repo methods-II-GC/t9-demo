@@ -30,56 +30,56 @@ Gorman & Sproat 2021:§7.6 for more information.
 We first need a transducer mapping from the numerical to alphabetic characters.
 The mapping itself is as follows:
 
-    ```python
-    t9_map = [("0", [" "]), ("2", ["a", "b", "c"]), ("3", ["d", "e", "f"]),
-              ("4", ["g", "h", "i"]), ("5", ["j", "k", "l"]),
-              ("6", ["m", "n", "o"]), ("7", ["p", "q", "r", "s"]),
-              ("8", ["t", "u", "v"]), ("9", ["w", "x", "y", "z"])]
-    ```
+```python
+t9_map = [("0", [" "]), ("2", ["a", "b", "c"]), ("3", ["d", "e", "f"]),
+          ("4", ["g", "h", "i"]), ("5", ["j", "k", "l"]),
+          ("6", ["m", "n", "o"]), ("7", ["p", "q", "r", "s"]),
+          ("8", ["t", "u", "v"]), ("9", ["w", "x", "y", "z"])]
+```
 
 We can turn this into a simple T9 decoder (numeral-to-alphabet) transducer as
 follows:
 
-    ```python
-    decoder = pynini.Fst()
-    for inp, outs in t9_map:
-      decoder |= pynini.cross(inp, pynini.union(*outs))
-    decoder.closure().optimize()
-    ```
+```python
+decoder = pynini.Fst()
+for inp, outs in t9_map:
+    decoder |= pynini.cross(inp, pynini.union(*outs))
+decoder.closure().optimize()
+```
 
 Alternatively, one could have used `string_map` but this would require entries
 in a different format (i.e., pairs of strings).
 
 Next, we build a lexicon acceptor representing the union of all words in the
-vocabulary, separated by space.
+vocabulary, separated by space:
 
-    ```python
-    lexicon = pynini.string_map(lexicon)
-    # This helper is the FST equivalent of " ".join(...).
-    lexicon = pynutil.join(lexicon, " ").optimize()
-    ```
+```python
+lexicon = pynini.string_map(lexicon)
+# This helper is the FST equivalent of " ".join(...).
+lexicon = pynutil.join(lexicon, " ").optimize()
+```
 
 Finally, to decode, we use the `decoder` to generate all possible strings, and
 the `lexicon` to filter them. Given some `t9_input` string:
 
-    ```python
-    # This just does composition and output projection, with some checks.
-    lattice = rewrite.rewrite_lattice(t9_input, decoder)
-    # Filters non-lexical paths.
-    lattice = pynini.intersect(lattice, lexicon)
-    ```
+```python
+# This just does composition and output projection, with some checks.
+lattice = rewrite.rewrite_lattice(t9_input, decoder)
+# Filters non-lexical paths.
+lattice = pynini.intersect(lattice, lexicon)
+```
 
 These steps are all provided in a Python class in the Pynini `examples`
 submodule,
 [`pynini.examples.t9`](https://github.com/kylebgorman/pynini/blob/master/pynini/examples/t9.py):
 
-    ```python
-    from pynini.examples import t9
+```python
+from pynini.examples import t9
 
-    # The argument is an iterable of strings.
-    my_t9 = t9.T9(lexicon)
-    lattice = my_t9.decode("737837804726833")
-    ```
+# The argument is an iterable of strings.
+my_t9 = t9.T9(lexicon)
+lattice = my_t9.decode("737837804726833")
+```
 
 Take a quick look at the class to see how it's organized; note for instance that
 it has an `encode` method in addition to `decode`.
@@ -100,20 +100,20 @@ see what it does, then run it like so:
 The following snippet is then used to build a lexicon out of this data, here
 using a Python hash-backed `set`:
 
-    ```python
-    def lexicon() -> set[str]:
-        result = set()
-        with open(SOURCE, "r") as source:
-            for line in source:
-                result.update(line.split())
-        return result
-    ```
+```python
+def lexicon() -> set[str]:
+    result = set()
+    with open(SOURCE, "r") as source:
+         for line in source:
+             result.update(line.split())
+    return result
+```
 
 We then incorporate this as follows:
 
-    ```python
-    my_t9 = t9.T9(lexicon())
-    ```
+```python
+my_t9 = t9.T9(lexicon())
+```
 
 ## Adding a language model
 
@@ -146,20 +146,20 @@ To incorporate the LM into decoding, all we need to do is:
 
 - Load the LM (which is just an FST file) into Pynini:
 
-  ``` python
+  ```python
   lm = pynini.Fst.read(LM)
   ```
 
 - Compose the lattice with the LM to score the various paths:
 
-  ``` python
+  ```python
   lattice @= lm  # This is equivalent to: lattice = lattice @ lm.
   ```
 
 - Compute the highest-probability path (the "shortest path") and convert it to a
   string:
 
-  ``` python
+  ```python
   print(f"Best candidate: {rewrite.lattice_to_top_string(lattice)}")
   ```
 
