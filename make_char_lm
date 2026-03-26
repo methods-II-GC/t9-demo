@@ -2,7 +2,6 @@
 
 set -eou pipefail
 
-./char_tokenize.py > news.txt
 farcompilestrings \
     --fst_type=compact \
     --token_type=byte \
